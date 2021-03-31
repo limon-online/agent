@@ -14,5 +14,5 @@ cfg_if::cfg_if! {
 
 fn main() {
   let system = system::System::new();
-  println!("{} {}", system.name, system.version);
+  println!("System: {}", system);
 }
