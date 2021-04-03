@@ -14,5 +14,7 @@ cfg_if::cfg_if! {
 
 fn main() {
   let system = system::System::new();
-  println!("System: {}", system);
+  let json = serde_json::to_string(&system).unwrap();
+
+  println!("{}", json);
 }

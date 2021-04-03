@@ -1,5 +1,7 @@
 use std::fmt;
+use serde::Serialize;
 
+#[derive(Serialize)]
 pub struct System {
   pub name: String,
   pub version: String
