@@ -1,10 +1,13 @@
 use std::fmt;
 use serde::Serialize;
+use crate::cpu::Cpu;
+use crate::cpu::CpuInfo;
 
 #[derive(Serialize)]
 pub struct System {
   pub name: String,
-  pub version: String
+  pub version: String,
+  pub cpu_list: Vec<Cpu>
 }
 
 
@@ -19,7 +22,8 @@ pub trait SystemInfo {
   fn new() -> System {
     System {
       name: System::get_name(),
-      version: System::get_version()
+      version: System::get_version(),
+      cpu_list: Cpu::get_cpu_list()
     }
   }
 

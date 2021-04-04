@@ -1,5 +1,6 @@
 use crate::system::SystemInfo;
 
+mod cpu;
 mod system;
 
 cfg_if::cfg_if! {
