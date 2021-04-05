@@ -4,6 +4,19 @@ use sentry;
 
 use crate::cpu::{Cpu, CpuInfo};
 
+struct CpuUsage {
+  user: u64,
+  nice: u64,
+  system: u64,
+  idle: u64,
+  iowait: u64,
+  irq: u64,
+  softirq: u64,
+  steal: u64,
+  guest: u64,
+  guest_nice: u64,
+}
+
 
 enum CpuInfoType {
   Id,
@@ -96,5 +109,82 @@ impl CpuInfo for Cpu {
     }
 
     cpu_list
+  }
+
+  fn get_usage(&self) -> u64 {
+    CpuUsage::new(&self.id).get_usage()
+  }
+}
+
+
+impl CpuUsage {
+  fn new(cpu_id: &String) -> CpuUsage {
+    let mut usage = CpuUsage {
+      user: 0,
+      nice: 0,
+      system: 0,
+      idle: 0,
+      iowait: 0,
+      irq: 0,
+      softirq: 0,
+      steal: 0,
+      guest: 0,
+      guest_nice: 0
+    };
+
+    // TODO: Read to string doesn't reopen file
+    let contents = fs::read_to_string("/proc/stat");
+
+    let contents = match contents {
+      Ok(contents) => contents,
+      Err(err) => {
+        sentry::capture_error(&err);
+        return usage;
+      }
+    };
+
+    for line in contents.split("\n") {
+      let target_cpu = "cpu".to_owned() + cpu_id;
+
+      if line.starts_with(&target_cpu) {
+        let values: Vec<String> = line
+          .replace(&target_cpu, "")
+          .trim()
+          .split(" ")
+          .map(|s| s.to_string())
+          .collect();
+
+        // TODO: In linux < 2.6 not all rows are allow
+        usage.user = values[0].parse().unwrap();
+        usage.nice = values[1].parse().unwrap();
+        usage.system = values[2].parse().unwrap();
+        usage.idle = values[3].parse().unwrap();
+        usage.iowait = values[4].parse().unwrap();
+        usage.irq = values[5].parse().unwrap();
+        usage.softirq = values[6].parse().unwrap();
+        usage.steal = values[7].parse().unwrap();
+        usage.guest = values[8].parse().unwrap();
+        usage.guest_nice = values[9].parse().unwrap();
+      }
+    }
+
+    usage
+  }
+
+  fn total(&self) -> f32 {
+    let result = (
+      self.user + self.nice + self.system + self.idle +
+      self.iowait + self.irq + self.softirq + self.steal
+    );
+
+    if result > 0 { result as f32 } else { 1 as f32 }
+  }
+
+  fn usage(&self) -> f32 {
+    self.total() - (self.idle + self.iowait) as f32
+  }
+
+  pub fn get_usage(&self) -> u64 {
+    ((self.usage() / self.total()) * 100.0) as u64
   }
 }

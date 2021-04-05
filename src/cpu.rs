@@ -1,4 +1,5 @@
 use std::fmt;
+
 use serde::Serialize;
 
 #[derive(Serialize)]
@@ -44,4 +45,6 @@ pub trait CpuInfo {
   }
 
   fn get_cpu_list() -> Vec<Cpu>;
+
+  fn get_usage(&self) -> u64;
 }
