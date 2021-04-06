@@ -1,4 +1,6 @@
 use std::fs;
+use std::thread;
+use std::time::Duration;
 
 use sentry;
 
@@ -92,9 +94,8 @@ fn parse_cpu(cpu_info: &str) -> Cpu {
 impl CpuInfo for Cpu {
   fn get_cpu_list() -> Vec<Cpu> {
     let mut cpu_list: Vec<Cpu> = Vec::new();
-    let contents = fs::read_to_string("/proc/cpuinfo");
 
-    let contents = match contents {
+    let contents = match fs::read_to_string("/proc/cpuinfo") {
       Ok(contents) => contents,
       Err(err) => {
         sentry::capture_error(&err);
@@ -112,7 +113,12 @@ impl CpuInfo for Cpu {
   }
 
   fn get_usage(&self) -> u64 {
-    CpuUsage::new(&self.id).get_usage()
+    // TODO: Need to spawn thread for each get_usage
+    let t0 = CpuUsage::new(&self.id);
+    thread::sleep(Duration::from_millis(1000));
+    let t1 = CpuUsage::new(&self.id);
+
+    ((t1.usage() - t0.usage()) / (t1.total() - t0.total()) * 100 as f32) as u64
   }
 }
 
@@ -132,10 +138,7 @@ impl CpuUsage {
       guest_nice: 0
     };
 
-    // TODO: Read to string doesn't reopen file
-    let contents = fs::read_to_string("/proc/stat");
-
-    let contents = match contents {
+    let contents = match fs::read_to_string("/proc/stat") {
       Ok(contents) => contents,
       Err(err) => {
         sentry::capture_error(&err);
@@ -182,9 +185,5 @@ impl CpuUsage {
 
   fn usage(&self) -> f32 {
     self.total() - (self.idle + self.iowait) as f32
-  }
-
-  pub fn get_usage(&self) -> u64 {
-    ((self.usage() / self.total()) * 100.0) as u64
   }
 }
