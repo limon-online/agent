@@ -1,7 +1,11 @@
 use std::fs;
 
+use async_std::task;
+use async_trait::async_trait;
+use futures::join;
 use sentry;
 
+use crate::cpu::CpuInfo;
 use crate::system::{System, SystemInfo};
 
 enum InfoType {
@@ -36,6 +40,7 @@ fn get_system_info(info: InfoType) -> String {
 }
 
 
+#[async_trait]
 impl SystemInfo for System {
   fn get_name() -> String {
     get_system_info(InfoType::Name)
@@ -43,5 +48,23 @@ impl SystemInfo for System {
 
   fn get_version() -> String {
     get_system_info(InfoType::Version)
+  }
+
+  fn update_information(&self) {
+    task::block_on(self.update_information_future());
+  }
+
+  async fn update_information_future(&self) {
+    // TODO: Need to pass &mut self info update_cpu()
+    // for cpu in &self.cpu_list {
+    //   futures::join!(cpu.update_usage());
+    // }
+
+    futures::join!(
+      self.cpu_list[0].update_usage(),
+      self.cpu_list[1].update_usage(),
+      self.cpu_list[2].update_usage(),
+      self.cpu_list[3].update_usage()
+    );
   }
 }

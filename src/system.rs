@@ -1,5 +1,8 @@
 use std::fmt;
+
+use async_trait::async_trait;
 use serde::Serialize;
+
 use crate::cpu::Cpu;
 use crate::cpu::CpuInfo;
 
@@ -18,6 +21,7 @@ impl fmt::Display for System {
 }
 
 
+#[async_trait]
 pub trait SystemInfo {
   fn new() -> System {
     System {
@@ -30,4 +34,8 @@ pub trait SystemInfo {
   fn get_name() -> String;
 
   fn get_version() -> String;
+
+  fn update_information(&self);
+
+  async fn update_information_future(&self);
 }

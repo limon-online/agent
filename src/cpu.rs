@@ -1,5 +1,6 @@
 use std::fmt;
 
+use async_trait::async_trait;
 use serde::Serialize;
 
 #[derive(Serialize)]
@@ -15,7 +16,9 @@ pub struct Cpu {
   pub mhz: String,
   pub cache: String,
   pub flags: String,
-  pub bugs: String
+  pub bugs: String,
+  // TODO: Don't serialize
+  pub usage: u64
 }
 
 
@@ -26,6 +29,7 @@ impl fmt::Display for Cpu {
 }
 
 
+#[async_trait]
 pub trait CpuInfo {
   fn new() -> Cpu {
     Cpu {
@@ -40,11 +44,12 @@ pub trait CpuInfo {
       mhz: String::from("Unknown"),
       cache: String::from("Unknown"),
       flags: String::from("Unknown"),
-      bugs: String::from("Unknown")
+      bugs: String::from("Unknown"),
+      usage: 0
     }
   }
 
   fn get_cpu_list() -> Vec<Cpu>;
 
-  fn get_usage(&self) -> u64;
+  async fn update_usage(&self);
 }

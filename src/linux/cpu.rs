@@ -2,6 +2,8 @@ use std::fs;
 use std::thread;
 use std::time::Duration;
 
+use async_std::task;
+use async_trait::async_trait;
 use sentry;
 
 use crate::cpu::{Cpu, CpuInfo};
@@ -91,6 +93,7 @@ fn parse_cpu(cpu_info: &str) -> Cpu {
 }
 
 
+#[async_trait]
 impl CpuInfo for Cpu {
   fn get_cpu_list() -> Vec<Cpu> {
     let mut cpu_list: Vec<Cpu> = Vec::new();
@@ -112,13 +115,13 @@ impl CpuInfo for Cpu {
     cpu_list
   }
 
-  fn get_usage(&self) -> u64 {
-    // TODO: Need to spawn thread for each get_usage
+  async fn update_usage(&self) {
     let t0 = CpuUsage::new(&self.id);
-    thread::sleep(Duration::from_millis(1000));
+    task::sleep(Duration::from_millis(1000)).await;
     let t1 = CpuUsage::new(&self.id);
 
-    ((t1.usage() - t0.usage()) / (t1.total() - t0.total()) * 100 as f32) as u64
+    // TODO: Need to update self.usage instead of print value
+    println!("{}", ((t1.usage() - t0.usage()) / (t1.total() - t0.total()) * 100 as f32) as u64);
   }
 }
 
